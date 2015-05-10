@@ -15,7 +15,7 @@ router.route('/schools')
     var school = new School(req.body);
     school.save(function(err){
       if(err)
-	res.send(err);
+        res.send(err);
       res.send({message:'School Added'});
     });
   });
