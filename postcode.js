@@ -8,7 +8,7 @@ var headers = {
 };
 
 var options = {
-  host: '10.7.57.141',
+  host: 'localhost',
   port: 8000,
   path: '/api/postcodes',
   method: 'POST',
@@ -21,7 +21,7 @@ var req = http.request(options, function(res) {
 
 function readFileToMongo(file) {
   fs.readFile(file, "utf-8", function(err, data) {
-    var json = data
+    var tmpFile = data
       .toString()
       .split('\n')
       .map(function(line) {
@@ -36,7 +36,14 @@ function readFileToMongo(file) {
           region: str[4] 
         };
       });
-    var pureJson = JSON.parse(JSON.stringify(json));
+    var json = JSON.parse(JSON.stringify(tmpFile));
+
+    json.forEach(function(item) {
+      var req = http.request(options, function(res) {});
+      req.write(JSON.stringify(item)); 
+      req.end();
+      console.log(JSON.stringify(item));
+    });
 
     //for (var i in pureJson) {
     //  console.log(pureJson[i]);
@@ -46,14 +53,15 @@ function readFileToMongo(file) {
     //pureJson.map(function(item) {
     //  console.log(item);
     //});
-    for (var i = 0; i < pureJson.length; i++) {
-      console.log(JSON.stringify(pureJson[i]));
-      req.write(JSON.stringify(pureJson[i]));
-    }
+    //for (var i = 0; i < json.length; i++) {
+    //  console.log(JSON.stringify(json[i]));
+      //req.write(JSON.stringify(json[i]));
+    //}
 
-    req.end();
+    //req.end();
     //console.log(pureJson);
   });
 }
 
 readFileToMongo(file);
+
