@@ -1,7 +1,7 @@
 var express = require('express');
 var bodyParser = require('body-parser');
 var mongoose = require('mongoose');
-var schools = require('./routes/schools');
+var routers = require('./routes/routers');
 
 var app = express();
 
@@ -12,6 +12,6 @@ mongoose.connect(connectionString);
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded());
-app.use('/api', schools);
+app.use('/api', routers);
 
 module.exports = app;
