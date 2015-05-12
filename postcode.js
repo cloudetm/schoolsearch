@@ -6,7 +6,6 @@ var file = process.argv[2];
 var headers = {
   'Content-Type': 'application/json'
 };
-
 var options = {
   host: 'localhost',
   port: 8000,
@@ -14,10 +13,6 @@ var options = {
   method: 'POST',
   headers: headers
 }
-
-var req = http.request(options, function(res) {
-
-});
 
 function readFileToMongo(file) {
   fs.readFile(file, "utf-8", function(err, data) {
@@ -39,7 +34,12 @@ function readFileToMongo(file) {
     var json = JSON.parse(JSON.stringify(tmpFile));
 
     json.forEach(function(item) {
-      var req = http.request(options, function(res) {});
+      var req = http.request(options, function(res) {
+        res.setEncoding('utf8');
+        res.on('data', function (chunk) {
+            console.log("body: " + chunk);
+        });
+      });
       req.write(JSON.stringify(item)); 
       req.end();
       console.log(JSON.stringify(item));
