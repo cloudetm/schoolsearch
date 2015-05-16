@@ -65,9 +65,6 @@ function querySchoolBoardData(position)
 
   req = hq.post(url, opts);
   req.end(body);
-  req.on('error', function(err) {
-    console.log(err);
-  });
 
   return req;
 }
@@ -82,15 +79,37 @@ router.route('/postcodes/:code')  // code format is T1Y5K2
         if (err) {
           return res.send(err);
         }
-        var externalQry = querySchoolBoardData(pos);
-        externalQry.pipe(
+        console.time("timer");
+        var qry = querySchoolBoardData(pos);
+        /*
+        qry.on('error', function(err) {
+          console.log(err);
+          res.send(err);
+        });
+        
+        qry.on('data', function(data) {
+          console.log(data);
+          res.send(data);
+        });
+        */
+        // using pipe to wait
+        qry.pipe(
           wait(function(err, data) {
               if (err) {
                 res.send(err);
               }
+              
+              var s = data.toString(); 
+              console.log(s);
+              s.substr(1, s.length-2).split(',').forEach(function(el) {
+                console.log(el);
+              });
+              
               res.send(data);
             }
         ));
+        //
+        console.timeEnd("timer");
       }
     );
   });

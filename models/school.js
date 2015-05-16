@@ -3,12 +3,13 @@ var Schema=mongoose.Schema;
  
 var schoolSchema = new Schema({
   name: String,
-  id: String,
+  href: String,
   lat: String,
   lng: String,
-  rating: String,
-  grades: String,
-  programs: String
+  id: String,
+  grades: String
+}, {
+  collection: 'cal_school_list'
 });
  
-module.exports = mongoose.model('School', schoolSchema);
+module.exports = mongoose.model('CalSchool', schoolSchema);

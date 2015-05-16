@@ -1,3 +1,5 @@
+var http = require('http');
+http.globalAgent.maxSockets = Infinity;
 var express = require('express');
 var bodyParser = require('body-parser');
 var mongoose = require('mongoose');
