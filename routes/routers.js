@@ -7,6 +7,7 @@ var hq = require('hyperquest');
 var wait = require('event-stream').wait;
 var async = require('async');
 
+/*
 router.route('/schools')
   .get(function(req, res) {
     School.find(function(err, schools) {
@@ -43,6 +44,7 @@ router.route('/postcodes')
       res.send({message:'Postcode Added:'+postcode});
     });
   });
+*/
 
 function querySchoolBoardData(position)
 {

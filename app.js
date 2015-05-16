@@ -14,6 +14,10 @@ mongoose.connect(connectionString);
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded());
-app.use('/api', routers);
+
+app.get('/index.html', function(req, res) {
+  res.send('Hello theHosty API');
+});
+app.use('/v1', routers);
 
 module.exports = app;
