@@ -9,13 +9,13 @@ var res = parsedHTML('tr').next(); // skip the table header
 res.map(function(i, elem) {
   row = $(elem).children();
   jsonData.push({ 
-    "2013-14-Rank": $(row).eq(0).text(),
-    "Rank-in-last-5Y": $(row).eq(1).text(),
-    "SchoolName": $(row).eq(3).text(),
-    "SchoolHref": $(row).children('a').attr('href'),
-    "Area": $(row).eq(4).text(),
-    "2013-14-Rating": $(row).eq(5).text(),
-    "Rating-in-last-5Y": $(row).eq(6).text()
+    "name": $(row).eq(3).text(),
+    "href": $(row).children('a').attr('href'),
+    "area": $(row).eq(4).text(),
+    "rank_2013_14": $(row).eq(0).text(),
+    "rank_5y": $(row).eq(1).text(),
+    "rating_2013_14": $(row).eq(5).text(),
+    "rating_5y": $(row).eq(6).text()
   });
 });
 

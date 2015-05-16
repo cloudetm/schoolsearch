@@ -1,9 +1,11 @@
-var School = require('../models/school');
+var CalSchool = require('../models/school');
+var CalRank = require('../models/rank');
 var Postcode = require('../models/postcode');
 var express = require('express');
 var router = express.Router();
 var hq = require('hyperquest');
 var wait = require('event-stream').wait;
+var async = require('async');
 
 router.route('/schools')
   .get(function(req, res) {
@@ -69,9 +71,12 @@ function querySchoolBoardData(position)
   return req;
 }
 
+function handleError(err) {
+  console.log('handleError: ' + err);
+}
+
 router.route('/postcodes/:code')  // code format is T1Y5K2
   .get(function(req, res) {
-    var self = this;
     Postcode.findOne(
       { pt: req.params.code }, 
       { _id: 0, lat: 1, lng: 1 },
@@ -81,31 +86,76 @@ router.route('/postcodes/:code')  // code format is T1Y5K2
         }
         console.time("timer");
         var qry = querySchoolBoardData(pos);
-        /*
-        qry.on('error', function(err) {
-          console.log(err);
-          res.send(err);
-        });
         
-        qry.on('data', function(data) {
-          console.log(data);
-          res.send(data);
-        });
-        */
-        // using pipe to wait
         qry.pipe(
           wait(function(err, data) {
+              /* comment out for testing today as CBE endpoint out of service.
               if (err) {
                 res.send(err);
               }
-              
-              var s = data.toString(); 
-              console.log(s);
-              s.substr(1, s.length-2).split(',').forEach(function(el) {
-                console.log(el);
+              */
+              // -TBD, store the hash like, { postcode: 'T1Y5K2', schools: '12, 34, 56, 78' }
+
+              fakedata = '[191, 221, 66, 58]'; // fake data for test
+
+              var qryResult = [], s = fakedata.toString();
+
+              async.map(s.substr(1, s.length-2).split(','), function(id, callback) {
+                CalSchool.findOne(
+                  { id: id.trim() },
+                  { _id: 0, id: 1, name: 1, lat: 1, lng: 1, grades: 1 },
+                  function(err, schoolDoc) {
+                    if (err) return callback(err);
+                    if (schoolDoc) {                      
+                      console.log(schoolDoc);
+                      var orig = schoolDoc.name;
+                      var n = orig.indexOf("School");
+                      var after = n > -1 ? orig.substr(0, n) : orig;
+                      console.log(after.trim());
+                      CalRank.findOne(
+                        { name: after.trim() },
+                        { _id: 0, name: 1, area: 1, rank_2013_14: 1, rank_5y: 1, rating_2013_14: 1, rating_5y: 1 },
+                        function(err, rankDoc) {
+                          if (err) {
+                            console.log('no found school rank: '+after.trim()+':'+err);
+                            return callback(err);
+                          }
+
+                          if (rankDoc === null) {
+                            qryResult.push({
+                              id: schoolDoc.id,
+                              name: schoolDoc.name,
+                              grades: schoolDoc.grades,
+                              lat: schoolDoc.lat,
+                              lng: schoolDoc.lng
+                            });
+                          } else {
+                            qryResult.push({
+                              id: schoolDoc.id,
+                              name: schoolDoc.name,
+                              area: rankDoc.area,
+                              rank_2013_14: rankDoc.rank_2013_14,
+                              rank_5y: rankDoc.rank_5y,
+                              rating_2013_14: rankDoc.rating_2013_14,
+                              rating_5y: rankDoc.rating_5y,
+                              grades: schoolDoc.grades,
+                              lat: schoolDoc.lat,
+                              lng: schoolDoc.lng
+                            });
+                          }
+                          callback();
+                        }
+                      );
+                    } else {
+                      callback(err);
+                    }
+
+                  }
+                );
+              }, function(err) {
+                console.log(qryResult);
+                res.send(qryResult);
               });
-              
-              res.send(data);
             }
         ));
         //
