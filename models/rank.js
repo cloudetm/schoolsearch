@@ -5,8 +5,8 @@ var rankSchema = new Schema({
   name: String,
   href: String,
   area: String,
-  rank_2013_14: String,
-  rank_5y: String,
+  rank_2013_14: Array,
+  rank_5y: Array,
   rating_2013_14: String,
   rating_5y: String
 }, {

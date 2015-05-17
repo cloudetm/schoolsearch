@@ -14,7 +14,7 @@ parsedHTML('tr').map(function(i, elem) {
     "lat": $(elem).attr('data-lat'),
     "lng": $(elem).attr('data-lng'),
     "id": $(elem).attr('data-id'),
-    "grades": $(elem).attr('data-grades')
+    "grades": $(elem).attr('data-grades').split(',').filter(function(el) { return el !== ""; })
   });
 });
 

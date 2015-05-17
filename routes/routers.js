@@ -80,11 +80,14 @@ function handleError(err) {
 router.route('/postcodes/:code')  // code format is T1Y5K2
   .get(function(req, res) {
     Postcode.findOne(
-      { pt: req.params.code }, 
+      { pt: req.params.code.toUpperCase() }, 
       { _id: 0, lat: 1, lng: 1 },
       function(err, pos) {
         if (err) {
           return res.send(err);
+        }
+        if (pos === null) {
+          return res.send('[]');
         }
         console.time("timer");
         var qry = querySchoolBoardData(pos);
@@ -156,7 +159,7 @@ router.route('/postcodes/:code')  // code format is T1Y5K2
                 );
               }, function(err) {
                 console.log(qryResult);
-                res.send(qryResult);
+                res.send(JSON.stringify(qryResult, null, 2));
               });
             }
         ));
