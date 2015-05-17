@@ -7,6 +7,9 @@ var schoolSchema = new Schema({
   lat: String,
   lng: String,
   id: String,
+  phone: String,
+  postcode: String,
+  addr: String,
   grades: Array 
 }, {
   collection: 'cal_school_list'

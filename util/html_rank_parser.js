@@ -12,10 +12,10 @@ res.map(function(i, elem) {
     "name": $(row).eq(3).text(),
     "href": $(row).children('a').attr('href'),
     "area": $(row).eq(4).text(),
-    "rank_2013_14": $(row).eq(0).text().split('/'),
-    "rank_5y": $(row).eq(1).text().split('/'),
-    "rating_2013_14": $(row).eq(5).text(),
-    "rating_5y": $(row).eq(6).text()
+    "rank_2013_14": $(row).eq(0).text().split('/').map(function(el) { return Number(el); }),
+    "rank_5y": $(row).eq(1).text().split('/').map(function(el) { return Number(el); }),
+    "rating_2013_14": Number($(row).eq(5).text()),
+    "rating_5y": Number($(row).eq(6).text())
   });
 });
 

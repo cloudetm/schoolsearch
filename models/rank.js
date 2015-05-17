@@ -7,8 +7,8 @@ var rankSchema = new Schema({
   area: String,
   rank_2013_14: Array,
   rank_5y: Array,
-  rating_2013_14: String,
-  rating_5y: String
+  rating_2013_14: Number,
+  rating_5y: Number 
 }, {
   collection: 'cal_elem_rank'
 });

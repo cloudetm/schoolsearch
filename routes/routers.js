@@ -108,55 +108,60 @@ router.route('/postcodes/:code')  // code format is T1Y5K2
               async.map(s.substr(1, s.length-2).split(','), function(id, callback) {
                 CalSchool.findOne(
                   { id: id.trim() },
-                  { _id: 0, id: 1, name: 1, lat: 1, lng: 1, grades: 1 },
+                  { _id: 0, id: 1, name: 1, lat: 1, lng: 1, grades: 1, postcode: 1, phone: 1, addr: 1 },
                   function(err, schoolDoc) {
                     if (err) return callback(err);
-                    if (schoolDoc) {                      
-                      console.log(schoolDoc);
-                      var orig = schoolDoc.name;
-                      var n = orig.indexOf("School");
-                      var after = n > -1 ? orig.substr(0, n) : orig;
-                      console.log(after.trim());
-                      CalRank.findOne(
-                        { name: after.trim() },
-                        { _id: 0, name: 1, area: 1, rank_2013_14: 1, rank_5y: 1, rating_2013_14: 1, rating_5y: 1 },
-                        function(err, rankDoc) {
-                          if (err) {
-                            console.log('no found school rank: '+after.trim()+':'+err);
-                            return callback(err);
-                          }
-
-                          if (rankDoc === null) {
-                            qryResult.push({
-                              id: schoolDoc.id,
-                              name: schoolDoc.name,
-                              grades: schoolDoc.grades,
-                              lat: schoolDoc.lat,
-                              lng: schoolDoc.lng
-                            });
-                          } else {
-                            qryResult.push({
-                              id: schoolDoc.id,
-                              name: schoolDoc.name,
-                              area: rankDoc.area,
-                              rank_2013_14: rankDoc.rank_2013_14,
-                              rank_5y: rankDoc.rank_5y,
-                              rating_2013_14: rankDoc.rating_2013_14,
-                              rating_5y: rankDoc.rating_5y,
-                              grades: schoolDoc.grades,
-                              lat: schoolDoc.lat,
-                              lng: schoolDoc.lng
-                            });
-                          }
-                          callback();
+                    if (schoolDoc === null) {
+                      return callback(err);
+                    } 
+                    console.log(schoolDoc);
+                    var orig = schoolDoc.name;
+                    var n = orig.indexOf("School");
+                    var after = n > -1 ? orig.substr(0, n) : orig;
+                    console.log(after.trim());
+                    CalRank.findOne(
+                      { name: after.trim() },
+                      { _id: 0, name: 1, area: 1, rank_2013_14: 1, rank_5y: 1, rating_2013_14: 1, rating_5y: 1 },
+                      function(err, rankDoc) {
+                        if (err) {
+                          console.log('no found school rank: '+after.trim()+':'+err);
+                          return callback(err);
                         }
-                      );
-                    } else {
-                      callback(err);
-                    }
 
-                  }
-                );
+                        if (rankDoc === null) {
+                          qryResult.push({
+                            id: schoolDoc.id,
+                            name: schoolDoc.name,
+                            area: "Calgary", // -TBD, hack for the time being.
+                            grades: schoolDoc.grades,
+                            postcode: schoolDoc.postcode,
+                            phone: schoolDoc.phone,
+                            addr: schoolDoc.addr,
+                            lat: schoolDoc.lat,
+                            lng: schoolDoc.lng
+                          });
+                        } else {
+                          qryResult.push({
+                            id: schoolDoc.id,
+                            name: schoolDoc.name,
+                            area: rankDoc.area,
+                            rank_2013_14: rankDoc.rank_2013_14,
+                            rank_5y: rankDoc.rank_5y,
+                            rating_2013_14: rankDoc.rating_2013_14,
+                            rating_5y: rankDoc.rating_5y,
+                            grades: schoolDoc.grades,
+                            postcode: schoolDoc.postcode,
+                            phone: schoolDoc.phone,
+                            addr: schoolDoc.addr,
+                            lat: schoolDoc.lat,
+                            lng: schoolDoc.lng
+                          });
+                        }
+                        callback();
+                      }
+                    );
+                  } // end of function(err, schoolDoc)
+                ); // end of CalSchool.findOne
               }, function(err) {
                 console.log(qryResult);
                 res.send(JSON.stringify(qryResult, null, 2));
