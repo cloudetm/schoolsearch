@@ -149,7 +149,7 @@ function findPostcodeCache(postcode, cb) {
 
 router.route('/postcodes/:postcode')  // code format is T1Y5K2
   .get(function(req, res) {
-    var schoolList, postcode = req.params.postcode.toUpperCase();
+    var schoolList = null, doCache = 0; postcode = req.params.postcode.toUpperCase();
 
     console.time("timerHandleGETPostcode");
 
@@ -163,8 +163,8 @@ router.route('/postcodes/:postcode')  // code format is T1Y5K2
           { _id: 0 , postcode: 1, id: 1 },
           function(err, result) {
             if (err) callback(err);
-            if (!result) callback(result);
-            //schoolList = result.id.slice();
+            if (!result)  return callback();
+            schoolList = result.id.slice();
             console.log('schoolList: ' + result.id);
             return callback();
           }
@@ -172,22 +172,23 @@ router.route('/postcodes/:postcode')  // code format is T1Y5K2
       },
       function(callback) {
         if (schoolList !== null) {
-          console.log(schoolList);
+          console.log('Postcode cache hit: ' + postcode + ' : ' + schoolList);
           findSchoolInfoWithRank(schoolList, res);
-          callback(null, 'OP_NO_CACHE');
+          callback();
         } else {
           console.log('Postcode cache miss, search external source, postcode: ' + postcode);
+
           Postcode.findOne(
             { pt:  postcode }, 
             { _id: 0, lat: 1, lng: 1 },
             function(err, pos) {
               if (err) {
-                res.send(err);
                 callback(err);
+                return res.send(err);
               }
-              if (pos === null) {
-                res.send('[]');
-                callback('[]');
+              if (!pos) {
+                callback('Post code no found!');
+                return res.send('[]');
               }
 
               console.time("timerHandleFindSchoolData");
@@ -201,7 +202,8 @@ router.route('/postcodes/:postcode')  // code format is T1Y5K2
 
                   findSchoolInfoWithRank(data, res);
                   schoolList = data.slice();
-                  callback(null, 'OP_CACHE');
+                  doCache = 1;
+                  callback();
                 }
               ));
               console.timeEnd("timerHandleFindSchoolData");
@@ -210,16 +212,16 @@ router.route('/postcodes/:postcode')  // code format is T1Y5K2
         }
         console.timeEnd("timerHandleGETPostcode");
       }
-      ], function(err, results) {
-        console.log("GET postcode done! Results: "+results);
-        if (results.toString().indexOf('OP_CACHE') !== -1) {
-          console.log('schoolList: '+schoolList);
-          var postcodeCache = new PostcodeSearchCache({ postcode: postcode, id: schoolList});
+      ], function(err) {
+        if (err) console.log(err);
+        if (doCache === 1) {
+          console.log('Caching schoolList: '+schoolList);
+          var postcodeCache = new PostcodeSearchCache({ postcode: postcode, id: schoolList.toString() });
           postcodeCache.save(function(err) {
             if (err) {
               return console.log(err);
             }
-            console.log('Done for caching the postcode/schools pair: ');
+            console.log('> Done for caching the postcode/schools pair');
           });
         }
     });
