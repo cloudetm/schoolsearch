@@ -7,6 +7,7 @@ var router = express.Router();
 var hq = require('hyperquest');
 var wait = require('event-stream').wait;
 var async = require('async');
+var Q = require('q');
 
 /* Hold off these routes for the time being
 
@@ -144,18 +145,16 @@ function findSchoolInfoWithRank(schoolList, respHandle) {
   });
 }
 
-function findPostcodeCache(postcode, cb) {
-}
-
 router.route('/postcodes/:postcode')  // code format is T1Y5K2
   .get(function(req, res) {
-    var schoolList = null, doCache = 0; postcode = req.params.postcode.toUpperCase();
+    var schoolList = null, doCache = 0, postcode = req.params.postcode.toUpperCase();
 
     console.time("timerHandleGETPostcode");
 
     /***************************************************
      * 1. Using async (default)
      ***************************************************/
+    /*
     async.series([
       function(callback) {
         PostcodeSearchCache.findOne(
@@ -226,13 +225,85 @@ router.route('/postcodes/:postcode')  // code format is T1Y5K2
         }
     });
 
-    //found = findPostcodeCache(postcode);
+    */
 
     /***************************************************
      * 2. Using Q
      ***************************************************/
+    function Q_FindPostcodeCache(postcode) {
+      var deferred = Q.defer();
 
+      PostcodeSearchCache.findOne(
+        { postcode: postcode },
+        { _id: 0 , postcode: 1, id: 1 },
+        function(err, result) {
+          if (err) deferred.reject(err);
+          if (!result)  return deferred.reject(err);
+          console.log('found in cache, schoolList: ' + result.id);
+          deferred.resolve(result.id.slice());
+        }
+      );
+      return deferred.promise;
+    }
 
+    function Q_FindSchoolInfo(school_id) {
+      var deferred = Q.defer();
+
+      CalSchool.findOne(
+        { id: school_id.trim() },
+        { _id: 0, id: 1, name: 1, lat: 1, lng: 1, grades: 1, postcode: 1, phone: 1, addr: 1 },
+        function(err, schoolDoc) {
+          if (err) deferred.reject(err);
+          if (schoolDoc === null) {
+            return deferred.reject(err);
+          } 
+          console.log(schoolDoc);
+          deferred.resolve(schoolDoc);
+        }
+      );
+      return deferred.promise;
+    }
+
+    function Q_FindSchoolRank(schoolDoc) {
+      var deferred = Q.defer();
+      var orig = schoolDoc.name;
+      var n = orig.indexOf("School");
+      var schName = n > -1 ? orig.substr(0, n) : orig;
+      console.log('Find school rank: ' + schName.trim());
+
+      CalRank.findOne(
+        { name: schName.trim() },
+        { _id: 0, name: 1, area: 1, rank_2013_14: 1, rank_5y: 1, rating_2013_14: 1, rating_5y: 1 },
+        function(err, rankDoc) {
+          if (err) {
+            console.log('no found school rank: '+schName.trim()+' : '+err);
+            return deferred.reject(err);
+          }
+          console.log(rankDoc);
+          deferred.resolve({ 
+            info: schoolDoc,
+            rank: rankDoc
+          });
+        }
+      );
+      return deferred.promise;
+    }
+
+    function Q_FindSchoolList(schoolList) {
+      var s = schoolList.toString();
+      var promiseArray = [];
+
+      s.substr(1, s.length-2).split(',').forEach(function(school_id) {
+        var eachPromise = Q_FindSchoolInfo(school_id).then(Q_FindSchoolRank);
+        promiseArray.push(Q_FindSchoolInfo(school_id));
+      });
+
+      return Q.all(promiseArray);
+    }
+
+    Q_FindPostcodeCache(postcode).then(Q_FindSchoolList).then(function(values) {
+        console.log(values);
+      });
   });
 
 module.exports=router;
