@@ -295,7 +295,7 @@ router.route('/postcodes/:postcode')  // code format is T1Y5K2
 
       s.substr(1, s.length-2).split(',').forEach(function(school_id) {
         var eachPromise = Q_FindSchoolInfo(school_id).then(Q_FindSchoolRank);
-        promiseArray.push(Q_FindSchoolInfo(school_id));
+        promiseArray.push(eachPromise);
       });
 
       return Q.all(promiseArray);
