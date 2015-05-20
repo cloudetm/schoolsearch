@@ -151,9 +151,9 @@ router.route('/postcodes/:postcode')  // code format is T1Y5K2
 
     console.time("timerHandleGETPostcode");
 
-    /***************************************************
-     * 1. Using async (default)
-     ***************************************************/
+    /********************************************************
+     * 1. Using async (test passed, not turn on by default)
+     ********************************************************/
     /*
     async.series([
       function(callback) {
@@ -228,7 +228,7 @@ router.route('/postcodes/:postcode')  // code format is T1Y5K2
     */
 
     /***************************************************
-     * 2. Using Q
+     * 2. Using Q (Turn on by default)
      ***************************************************/
     function Q_FindPostcodeCache(postcode) {
       var deferred = Q.defer();
@@ -237,10 +237,14 @@ router.route('/postcodes/:postcode')  // code format is T1Y5K2
         { postcode: postcode },
         { _id: 0 , postcode: 1, id: 1 },
         function(err, result) {
-          if (err) deferred.reject(err);
-          if (!result)  return deferred.reject(err);
-          console.log('found in cache, schoolList: ' + result.id);
-          deferred.resolve(result.id.slice());
+          if (err) { 
+            deferred.reject(new Error(err));
+          } else if (!result)  {
+            deferred.resolve(null);
+          } else {
+            console.log('found in cache, schoolList: ' + result.id);
+            deferred.resolve(result.id.slice());
+          }
         }
       );
       return deferred.promise;
@@ -253,12 +257,15 @@ router.route('/postcodes/:postcode')  // code format is T1Y5K2
         { id: school_id.trim() },
         { _id: 0, id: 1, name: 1, lat: 1, lng: 1, grades: 1, postcode: 1, phone: 1, addr: 1 },
         function(err, schoolDoc) {
-          if (err) deferred.reject(err);
-          if (schoolDoc === null) {
-            return deferred.reject(err);
-          } 
-          console.log(schoolDoc);
-          deferred.resolve(schoolDoc);
+          if (err) {
+            deferred.reject(new Error(err));
+          } else if (!schoolDoc) {
+            console.log('[Err]: no found school info: ' + school_id.trim());
+            deferred.reject(new Error(err));
+          } else {
+            console.log(schoolDoc);
+            deferred.resolve(schoolDoc);
+          }
         }
       );
       return deferred.promise;
@@ -276,14 +283,38 @@ router.route('/postcodes/:postcode')  // code format is T1Y5K2
         { _id: 0, name: 1, area: 1, rank_2013_14: 1, rank_5y: 1, rating_2013_14: 1, rating_5y: 1 },
         function(err, rankDoc) {
           if (err) {
-            console.log('no found school rank: '+schName.trim()+' : '+err);
-            return deferred.reject(err);
+            deferred.reject(new Error(err));
+          } else if (!rankDoc) {
+            console.log('no found school rank, return school info only: '+schName.trim());
+            deferred.resolve({
+                id: schoolDoc.id,
+                name: schoolDoc.name,
+                area: "Calgary", // -TBD, hack for the time being.
+                grades: schoolDoc.grades,
+                postcode: schoolDoc.postcode,
+                phone: schoolDoc.phone,
+                addr: schoolDoc.addr,
+                lat: schoolDoc.lat,
+                lng: schoolDoc.lng
+            });
+          } else {
+            console.log(rankDoc);
+            deferred.resolve({
+                id: schoolDoc.id,
+                name: schoolDoc.name,
+                area: rankDoc.area,
+                rank_2013_14: rankDoc.rank_2013_14,
+                rank_5y: rankDoc.rank_5y,
+                rating_2013_14: rankDoc.rating_2013_14,
+                rating_5y: rankDoc.rating_5y,
+                grades: schoolDoc.grades,
+                postcode: schoolDoc.postcode,
+                phone: schoolDoc.phone,
+                addr: schoolDoc.addr,
+                lat: schoolDoc.lat,
+                lng: schoolDoc.lng
+            });
           }
-          console.log(rankDoc);
-          deferred.resolve({ 
-            info: schoolDoc,
-            rank: rankDoc
-          });
         }
       );
       return deferred.promise;
@@ -301,8 +332,22 @@ router.route('/postcodes/:postcode')  // code format is T1Y5K2
       return Q.all(promiseArray);
     }
 
-    Q_FindPostcodeCache(postcode).then(Q_FindSchoolList).then(function(values) {
-        console.log(values);
+    function Q_FindFromSchoolBoard(postcode) {
+      if (postcode !== null) {
+        return Q.resolve(postcode);
+      } else {
+        console.log('-TBD, Postcode cache miss, go external search');
+        return Q.resolve(postcode);
+      }
+    }
+
+    Q_FindPostcodeCache(postcode)
+      .then(Q_FindFromSchoolBoard)
+      .then(Q_FindSchoolList)
+      .then(function(qryResult) {
+        res.send(qryResult);
+      }, function(err) {
+        res.send(err);
       });
   });
 
