@@ -242,17 +242,20 @@ router.route('/postcodes/:postcode')  // code format is T1Y5K2
             deferred.reject(new Error(err));
           }
           if (!posData) {
-            deferred.reject(null);
+            deferred.reject('no postcode found');
           } else {
+            console.time('querySchoolBoardData');
             querySchoolBoardData(posData).pipe(
               wait(function(err, resp) {
-                if (err || !resp) {
-                  deferred.reject(null);
+                if (err || JSON.parse(resp).length === 0) {
+                  deferred.reject('No found school info');
+                } else {
+                  console.log('resp: '+resp);
+                  deferred.resolve(resp);
                 }
-                console.log('resp: '+resp);
-                deferred.resolve(resp);
               })
             );            
+            console.timeEnd('querySchoolBoardData');
           }
         }
       );
@@ -269,9 +272,22 @@ router.route('/postcodes/:postcode')  // code format is T1Y5K2
           if (err) {
             deferred.reject(new Error(err));
           } else if (!result)  {
-            return Q_FindPostcode(postcode).then(function(schoolList) {
-              deferred.resolve(schoolList);
-            });
+            console.log('Postcode no found in cache: '+postcode);
+            return Q_FindPostcode(postcode).
+              then(function(schoolList) {
+                console.log('Caching schoolList: '+schoolList);
+                var postcodeCache = new PostcodeSearchCache({ postcode: postcode, id: schoolList.toString() });
+                postcodeCache.save(function(err) {
+                  if (err) {
+                    return console.log(err);
+                  }
+                  console.log('> Done for caching the postcode/schools pair');
+                });
+
+                deferred.resolve(schoolList);
+              }, function(err) {
+                deferred.reject(err);
+              });
           } else {
             console.log('SchoolList found in cache: ' + result.id);
             deferred.resolve(result.id.slice());
@@ -379,7 +395,7 @@ router.route('/postcodes/:postcode')  // code format is T1Y5K2
       .then(function(qryResult) {
         res.send(qryResult);
       }, function(err) {
-        res.send(err);
+        res.send(err); // -TBD. May wrap up errors and only return [] or proper error code to caller
       });
     
 
