@@ -154,7 +154,8 @@ router.route('/postcodes/:postcode')  // code format is T1Y5K2
     /********************************************************
      * 1. Using async (test passed, not turn on by default)
      ********************************************************/
-    /*
+
+    /*    
     async.series([
       function(callback) {
         PostcodeSearchCache.findOne(
@@ -230,29 +231,56 @@ router.route('/postcodes/:postcode')  // code format is T1Y5K2
     /***************************************************
      * 2. Using Q (Turn on by default)
      ***************************************************/
-    function Q_FindPostcodeCache(postcode) {
+    
+    function Q_FindPostcode(postcode) {
       var deferred = Q.defer();
-
-      PostcodeSearchCache.findOne(
-        { postcode: postcode },
-        { _id: 0 , postcode: 1, id: 1 },
-        function(err, result) {
-          if (err) { 
+      Postcode.findOne(
+        { pt:  postcode }, 
+        { _id: 0, lat: 1, lng: 1 },
+        function(err, posData) {
+          if (err) {
             deferred.reject(new Error(err));
-          } else if (!result)  {
-            deferred.resolve(null);
+          }
+          if (!posData) {
+            deferred.reject(null);
           } else {
-            console.log('found in cache, schoolList: ' + result.id);
-            deferred.resolve(result.id.slice());
+            querySchoolBoardData(posData).pipe(
+              wait(function(err, resp) {
+                if (err || !resp) {
+                  deferred.reject(null);
+                }
+                console.log('resp: '+resp);
+                deferred.resolve(resp);
+              })
+            );            
           }
         }
       );
       return deferred.promise;
     }
 
+    function Q_FindPostcodeCache(postcode) {
+      var deferred = Q.defer();
+      
+      PostcodeSearchCache.findOne(
+        { postcode: postcode },
+        { _id: 0 , postcode: 1, id: 1 },
+        function(err, result) {
+          if (err) {
+            deferred.reject(new Error(err));
+          } else if (!result)  {
+            return Q_FindPostcode(postcode);
+          } else {
+            console.log('SchoolList found in cache: ' + result.id);
+            deferred.resolve(result.id.slice());
+          }
+        }
+      );      
+      return deferred.promise;
+    }
+
     function Q_FindSchoolInfo(school_id) {
       var deferred = Q.defer();
-
       CalSchool.findOne(
         { id: school_id.trim() },
         { _id: 0, id: 1, name: 1, lat: 1, lng: 1, grades: 1, postcode: 1, phone: 1, addr: 1 },
@@ -324,6 +352,7 @@ router.route('/postcodes/:postcode')  // code format is T1Y5K2
       var s = schoolList.toString();
       var promiseArray = [];
 
+      console.log('enter Q_FindSchoolList');
       s.substr(1, s.length-2).split(',').forEach(function(school_id) {
         var eachPromise = Q_FindSchoolInfo(school_id).then(Q_FindSchoolRank);
         promiseArray.push(eachPromise);
@@ -332,23 +361,28 @@ router.route('/postcodes/:postcode')  // code format is T1Y5K2
       return Q.all(promiseArray);
     }
 
-    function Q_FindFromSchoolBoard(postcode) {
-      if (postcode !== null) {
-        return Q.resolve(postcode);
+    function Q_FindFromSchoolBoard(schoolList) {
+      if (schoolList !== null) {
+        return Q.resolve(schoolList);
       } else {
         console.log('-TBD, Postcode cache miss, go external search');
-        return Q.resolve(postcode);
+        return Q.when(postcode, function(postcode) {
+          return querySchoolBoardData(postcode);
+        });
       }
     }
 
     Q_FindPostcodeCache(postcode)
-      .then(Q_FindFromSchoolBoard)
       .then(Q_FindSchoolList)
       .then(function(qryResult) {
         res.send(qryResult);
       }, function(err) {
         res.send(err);
       });
-  });
+    
 
+
+
+  });
+  
 module.exports=router;
