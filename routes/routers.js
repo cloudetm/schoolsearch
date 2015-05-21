@@ -269,7 +269,9 @@ router.route('/postcodes/:postcode')  // code format is T1Y5K2
           if (err) {
             deferred.reject(new Error(err));
           } else if (!result)  {
-            return Q_FindPostcode(postcode);
+            return Q_FindPostcode(postcode).then(function(schoolList) {
+              deferred.resolve(schoolList);
+            });
           } else {
             console.log('SchoolList found in cache: ' + result.id);
             deferred.resolve(result.id.slice());
