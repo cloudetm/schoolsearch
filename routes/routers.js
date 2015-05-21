@@ -81,13 +81,12 @@ router.route('/postcodes/:postcode')  // code format is T1Y5K2
     var schoolList = null, 
         postcode = req.params.postcode.toUpperCase();
 
-    console.time("timerHandleGETPostcode");
-
     /***************************************************
      * 1. Using Q                                      *
      *    - Turn on by default                         *
      *    - Much cleaner logic than using async        *
      ***************************************************/
+    console.time("timer_GET_Postcode");
     Q_FindPostcodeCache(postcode)
       .then(Q_FindSchoolList)
       .then(function(qryResult) {
@@ -95,13 +94,16 @@ router.route('/postcodes/:postcode')  // code format is T1Y5K2
       }, function(err) {
         res.send(err); // -TBD. May wrap up errors and only return [] or proper error code to caller
       });
-    
+    console.timeEnd("timer_GET_Postcode");
+
     /********************************************************
      * 2. Using async                                       *
      *    - Test passed                                     *
      *    - Not turn on by default                          *
      ********************************************************/
-    /*    
+    /*
+    console.time("timerHandleGETPostcode");
+
     async.series([
       function(callback) {
         PostcodeSearchCache.findOne(
@@ -269,7 +271,8 @@ function Q_FindSchoolInfo(school_id) {
 function Q_FindSchoolRank(schoolDoc) {
   var deferred = Q.defer();
   var orig = schoolDoc.name;
-  var n = orig.indexOf("School");
+  var check_high = orig.indexOf("High School");
+  var n = check_high > -1 ? check_high : orig.indexOf("School");
   var schName = n > -1 ? orig.substr(0, n) : orig;
   console.log('Find school rank: ' + schName.trim());
 

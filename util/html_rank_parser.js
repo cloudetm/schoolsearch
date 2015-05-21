@@ -1,7 +1,7 @@
 var $ = require('cheerio');
 var fs = require('fs');
 
-var htmlString = fs.readFileSync('rank-2015-elem.html').toString();
+var htmlString = fs.readFileSync('../../data/ab-high-rank.html').toString();
 var parsedHTML = $.load(htmlString);
 var jsonData = [];
 var res = parsedHTML('tr').next(); // skip the table header
