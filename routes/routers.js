@@ -9,6 +9,10 @@ var wait = require('event-stream').wait;
 var async = require('async');
 var Q = require('q');
 
+
+/*************************************************************
+ * Router functions                                          *
+ *************************************************************/
 /* Hold off these routes for the time being
 
 router.route('/schools')
@@ -49,34 +53,7 @@ router.route('/postcodes')
   });
 */
 
-function querySchoolBoardData(position) {
-  var req, buffer,
-  url = "http://www.cbe.ab.ca/schools/find-a-school/_vti_bin/SchoolProfileManager.svc/GetLocalSchools",
-  body = {
-    lat: position.lat,
-    lng: position.lng,
-    programid: "1",
-    grades: ""
-  };
- 
-  body = JSON.stringify(body);
-  console.log(body);
-
-  opts = {
-    headers: {
-      'Content-Type': 'application/json',
-      'Content-Length': body.length
-    }
-  }; 
-
-  req = hq.post(url, opts);
-  req.end(body);
-
-  return req;
-}
-
-
-router.route('/postcodes/:postcode')  // code format is T1Y5K2
+router.route('/postcodes/:postcode')  // postcode format is like T1Y5K2
   .get(function(req, res) {
     var schoolList = null, 
         postcode = req.params.postcode.toUpperCase();
@@ -176,6 +153,36 @@ router.route('/postcodes/:postcode')  // code format is T1Y5K2
     */
 
   });
+
+
+/*************************************************************
+ * Router helper functions                                   *
+ *************************************************************/
+function querySchoolBoardData(position) {
+  var req, buffer,
+  url = "http://www.cbe.ab.ca/schools/find-a-school/_vti_bin/SchoolProfileManager.svc/GetLocalSchools",
+  body = {
+    lat: position.lat,
+    lng: position.lng,
+    programid: "1",
+    grades: ""
+  };
+ 
+  body = JSON.stringify(body);
+  console.log(body);
+
+  opts = {
+    headers: {
+      'Content-Type': 'application/json',
+      'Content-Length': body.length
+    }
+  }; 
+
+  req = hq.post(url, opts);
+  req.end(body);
+
+  return req;
+}
 
 
 /***************************************************
@@ -331,17 +338,6 @@ function Q_FindSchoolList(schoolList) {
   return Q.all(promiseArray);
 }
 
-function Q_FindFromSchoolBoard(schoolList) {
-  if (schoolList !== null) {
-    return Q.resolve(schoolList);
-  } else {
-    console.log('-TBD, Postcode cache miss, go external search');
-    return Q.when(postcode, function(postcode) {
-      return querySchoolBoardData(postcode);
-    });
-  }
-}
-  
 
 /************************************************
  * API with async                               *
@@ -415,6 +411,5 @@ function findSchoolInfoWithRank(schoolList, respHandle) {
   });
 }
 */
-
 
 module.exports=router;
