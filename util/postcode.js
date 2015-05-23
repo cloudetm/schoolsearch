@@ -20,7 +20,7 @@ function readFileToMongo(file) {
           region: str[4] 
         };
       });
-    console.log(JSON.stringify(tmpFile));
+    console.log(JSON.stringify(tmpFile, null, 2));
 
     //var json = JSON.parse(JSON.stringify(tmpFile));
 
