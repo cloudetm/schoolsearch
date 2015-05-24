@@ -10,7 +10,7 @@ var app = express();
 
 app.use(express.static(path.join(__dirname + '/')));
 app.use('/bower_components',  express.static( path.join(__dirname + '/bower_components')));
-app.use('/public/components',  express.static( path.join(__dirname + '/components')));
+app.use('/components',  express.static( path.join(__dirname + '/components')));
 
 var dbName = 'schoolDB';
 var connectionString = 'mongodb://localhost:27017/' + dbName;

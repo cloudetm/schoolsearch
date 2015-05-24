@@ -1,0 +1,8 @@
+<p>My name: {{ myName }}</p>
+  <p>Friends:</p>
+  <ul>
+   <li *for="#name of names">
+      {{ name }}
+   </li>
+  </ul>
+<p *if="names.length > 3">You have many friends!</p>
