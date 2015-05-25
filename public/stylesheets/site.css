@@ -1,41 +1,44 @@
-$gray: #eee;
-
 md-content.md-default-theme {
-  background-color: $gray;
+  background-color: #eee;
 }
+
 md-card {
   background-color: #fff;
-  h2:first-of-type {
-    margin-top: 0;
-  }
 }
-md-toolbar {
-  .md-button.md-default-theme {
-    border-radius: 99%; // round toolbar buttons
-  }
+md-card h2:first-of-type {
+  margin-top: 0;
 }
+
+md-toolbar .md-button.md-default-theme {
+  border-radius: 99%;
+}
+
 h2 {
   font-weight: 400;
 }
+
 .md-toolbar-tools-bottom {
   font-size: small;
-  & :last-child {
-    opacity: 0.8;
-  }
 }
+.md-toolbar-tools-bottom :last-child {
+  opacity: 0.8;
+}
+
 md-toolbar:not(.md-hue-1),
 .md-fab {
   fill: #fff;
 }
+
 md-sidenav {
   fill: #737373;
-  ng-md-icon {
-    position: relative;
-    top: 5px; // adjust for svg viewbox
-  }
 }
+md-sidenav ng-md-icon {
+  position: relative;
+  top: 5px;
+}
+
 .user-avatar {
-  border-radius: 60%;
+  border-radius: 99%;
 }
 
 md-item-content {
@@ -69,3 +72,10 @@ md-item-content {
   margin: 0 0 3px;
   font-size: .75em;
 }
+
+md-sidenav, md-sidenav.md-locked-open, md-sidenav.md-closed.md-locked-open-add-active {
+ min-width: 200px !important;
+ width: 50vw !important;
+ max-width: 200px !important;
+}
+

@@ -23,11 +23,6 @@ app.controller('AppCtrl', ['$scope', '$mdBottomSheet','$mdSidenav', '$mdDialog',
   ];
   $scope.admin = [
     {
-      link : '',
-      title: 'Trash',
-      icon: 'delete'
-    },
-    {
       link : 'showListBottomSheet($event)',
       title: 'Settings',
       icon: 'settings'
@@ -125,7 +120,7 @@ app.directive('userAvatar', function() {
 });
 
 app.config(function($mdThemingProvider) {
-  var customBlueMap = 		$mdThemingProvider.extendPalette('light-blue', {
+  var customBlueMap = $mdThemingProvider.extendPalette('light-blue', {
     'contrastDefaultColor': 'light',
     'contrastDarkColors': ['50'],
     '50': 'ffffff'
