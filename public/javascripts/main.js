@@ -133,6 +133,6 @@ app.config(function($mdThemingProvider) {
     })
     .accentPalette('pink');
   $mdThemingProvider.theme('input', 'default')
-        .primaryPalette('grey')
+        .primaryPalette('grey');
 });
 
